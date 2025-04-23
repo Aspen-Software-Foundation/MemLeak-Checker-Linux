@@ -1,4 +1,5 @@
-//Hello from the Aspen Software Foundation!
+// Hello from the Aspen Software Foundation!
+// This file is part of the Aspen Memory Leak Checker (AMLC).
 
    //  _    ____  ____  _____ _   _ 
    // / \  / ___||  _ \| ____| \ | |
@@ -23,7 +24,11 @@ typedef struct MemBlock {
 static MemBlock* __amlc_head = NULL;
 
 static void __amlc_add_block(void* ptr, size_t size, const char* file, int line) {
-    MemBlock* block = malloc(sizeof(MemBlock));
+    MemBlock* block = (MemBlock*)malloc(sizeof(MemBlock));
+    if (!block) {
+        printf("Memory allocation failed for tracking memory block!\n");
+        return;
+    }
     block->ptr = ptr;
     block->size = size;
     block->file = file;
@@ -73,8 +78,12 @@ static void _CrtDumpMemoryLeaks() {
 }
 
 // Macros to override malloc/free
-#define malloc(x) __amlc_tracked_malloc(x, __FILE__, __LINE__)
-#define free(x) __amlc_tracked_free(x)
+#define AMLC_MALLOC(size) __amlc_tracked_malloc(size, __FILE__, __LINE__)
+#define AMLC_FREE(ptr) __amlc_tracked_free(ptr)
+
+// Override the standard malloc/free with the custom functions
+#define malloc(size) AMLC_MALLOC(size)
+#define free(ptr) AMLC_FREE(ptr)
 
 #endif // AMLC_H
 
