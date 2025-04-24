@@ -7,41 +7,37 @@
  // /     \ ___) |  __/| |___| |\  |
 // /       \____/|_|   |_____|_| \_|
 
-#ifndef AMLC_H
-#define AMLC_H
+#ifndef GANAMEDE_H
+#define GANAMEDE_H
 
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct MemBlock {
+typedef struct GanamedeBlock {
     void* ptr;
     size_t size;
     const char* file;
     int line;
-    struct MemBlock* next;
-} MemBlock;
+    struct GanamedeBlock* next;
+} GanamedeBlock;
 
-static MemBlock* __amlc_head = NULL;
+static GanamedeBlock* __ganamede_head = NULL;
 
-static void __amlc_add_block(void* ptr, size_t size, const char* file, int line) {
-    MemBlock* block = (MemBlock*)malloc(sizeof(MemBlock));
-    if (!block) {
-        printf("Memory allocation failed for tracking memory block!\n");
-        return;
-    }
+static void __ganamede_add_block(void* ptr, size_t size, const char* file, int line) {
+    GanamedeBlock* block = malloc(sizeof(GanamedeBlock));
     block->ptr = ptr;
     block->size = size;
     block->file = file;
     block->line = line;
-    block->next = __amlc_head;
-    __amlc_head = block;
+    block->next = __ganamede_head;
+    __ganamede_head = block;
 }
 
-static void __amlc_remove_block(void* ptr) {
-    MemBlock** curr = &__amlc_head;
+static void __ganamede_remove_block(void* ptr) {
+    GanamedeBlock** curr = &__ganamede_head;
     while (*curr) {
         if ((*curr)->ptr == ptr) {
-            MemBlock* temp = *curr;
+            GanamedeBlock* temp = *curr;
             *curr = temp->next;
             free(temp);
             return;
@@ -50,25 +46,25 @@ static void __amlc_remove_block(void* ptr) {
     }
 }
 
-static void* __amlc_tracked_malloc(size_t size, const char* file, int line) {
+static void* __ganamede_tracked_malloc(size_t size, const char* file, int line) {
     void* ptr = malloc(size);
     if (ptr) {
-        __amlc_add_block(ptr, size, file, line);
+        __ganamede_add_block(ptr, size, file, line);
     }
     return ptr;
 }
 
-static void __amlc_tracked_free(void* ptr) {
-    __amlc_remove_block(ptr);
+static void __ganamede_tracked_free(void* ptr) {
+    __ganamede_remove_block(ptr);
     free(ptr);
 }
 
 static void _CrtDumpMemoryLeaks() {
-    if (__amlc_head == NULL) {
+    if (__ganamede_head == NULL) {
         printf("No memory leaks detected.\n");
     } else {
         printf("Memory leaks detected:\n");
-        MemBlock* curr = __amlc_head;
+        GanamedeBlock* curr = __ganamede_head;
         while (curr) {
             printf(" Leak: %zu bytes at %p (allocated at %s:%d)\n",
                    curr->size, curr->ptr, curr->file, curr->line);
@@ -77,13 +73,10 @@ static void _CrtDumpMemoryLeaks() {
     }
 }
 
-// Macros to override malloc/free
-#define AMLC_MALLOC(size) __amlc_tracked_malloc(size, __FILE__, __LINE__)
-#define AMLC_FREE(ptr) __amlc_tracked_free(ptr)
+#ifdef _CRTDBG_MAP_ALLOC
+    #define malloc(x) __ganamede_tracked_malloc(x, __FILE__, __LINE__)
+    #define free(x)   __ganamede_tracked_free(x)
+#endif
 
-// Override the standard malloc/free with the custom functions
-#define malloc(size) AMLC_MALLOC(size)
-#define free(ptr) AMLC_FREE(ptr)
-
-#endif // AMLC_H
+#endif // GANAMEDE_H
 
