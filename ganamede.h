@@ -1,4 +1,5 @@
 // Hello from the Aspen Software Foundation!
+// Hi there! Founder speaking, I hope all of you have a great time with Ganamede!
 // This file is part of the Aspen Ganamede Leak Checker (AGLC).
 
    //  _    ____  ____  _____ _   _ 
@@ -8,7 +9,7 @@
 // /       \____/|_|   |_____|_| \_|
 
 #ifndef GANAMEDE_H
-#define GANAMEDE_H
+#define GANAMIDE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,8 +24,11 @@ typedef struct GanamedeBlock {
 
 static GanamedeBlock* __ganamede_head = NULL;
 
+// Add a block to track memory allocation
 static void __ganamede_add_block(void* ptr, size_t size, const char* file, int line) {
-    GanamedeBlock* block = malloc(sizeof(GanamedeBlock));
+    printf("Allocating memory: %zu bytes at %p (file: %s, line: %d)\n", size, ptr, file, line);
+
+    GanamedeBlock* block = (GanamedeBlock*)malloc(sizeof(GanamedeBlock)); // Explicit cast here
     block->ptr = ptr;
     block->size = size;
     block->file = file;
@@ -33,7 +37,10 @@ static void __ganamede_add_block(void* ptr, size_t size, const char* file, int l
     __ganamede_head = block;
 }
 
+// Remove a block when memory is freed
 static void __ganamede_remove_block(void* ptr) {
+    printf("Freeing memory: %p\n", ptr);
+    
     GanamedeBlock** curr = &__ganamede_head;
     while (*curr) {
         if ((*curr)->ptr == ptr) {
@@ -46,6 +53,7 @@ static void __ganamede_remove_block(void* ptr) {
     }
 }
 
+// Wrapped malloc function with tracking
 static void* __ganamede_tracked_malloc(size_t size, const char* file, int line) {
     void* ptr = malloc(size);
     if (ptr) {
@@ -54,11 +62,13 @@ static void* __ganamede_tracked_malloc(size_t size, const char* file, int line) 
     return ptr;
 }
 
+// Wrapped free function with tracking
 static void __ganamede_tracked_free(void* ptr) {
     __ganamede_remove_block(ptr);
     free(ptr);
 }
 
+// This function will check for any memory leaks at the end of the program
 static void _CrtDumpMemoryLeaks() {
     if (__ganamede_head == NULL) {
         printf("No memory leaks detected.\n");
@@ -73,10 +83,10 @@ static void _CrtDumpMemoryLeaks() {
     }
 }
 
-#ifdef _CRTDBG_MAP_ALLOC
-    #define malloc(x) __ganamede_tracked_malloc(x, __FILE__, __LINE__)
-    #define free(x)   __ganamede_tracked_free(x)
-#endif
+// Automatically hook malloc and free without needing definitions
+#define malloc(x) __ganamede_tracked_malloc(x, __FILE__, __LINE__)
+#define free(x)   __ganamede_tracked_free(x)
 
 #endif // GANAMEDE_H
+
 
