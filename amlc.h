@@ -1,5 +1,5 @@
 // Hello from the Aspen Software Foundation!
-// This file is part of the Aspen Memory Leak Checker (AMLC).
+// This file is part of the Aspen Ganamede Leak Checker (AMLC).
 
    //  _    ____  ____  _____ _   _ 
    // / \  / ___||  _ \| ____| \ | |
