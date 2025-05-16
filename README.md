@@ -1,4 +1,4 @@
 # MemLeak-Checker-Linux
 This is a Replicator of "_CrtDumpMemoryLeaks();" for Linux Users.
-You can include it via:
+You can include it by adding the file to your project folder, and running:
 ``#include "ganamede.h"``
